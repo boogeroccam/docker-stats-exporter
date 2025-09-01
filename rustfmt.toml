@@ -1,0 +1,5 @@
+tab_spaces = 4
+hard_tabs = true
+fn_params_layout = "Tall"
+match_block_trailing_comma = true
+use_field_init_shorthand = true
