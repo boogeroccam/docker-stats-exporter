@@ -26,7 +26,7 @@ pub fn stats() -> Result<Vec<DockerContainerStats>> {
 			"`docker stats` returned non-zero exit code with output: \n{}\n{}",
 			stdout, stderr
 		);
-		return Err(anyhow!("Docker stats command did bad :("));
+		return Err(anyhow!("Docker stats not good"));
 	}
 
 	let json_list_content = stdout.lines().collect::<Vec<&str>>().join(",");

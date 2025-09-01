@@ -26,10 +26,7 @@ lazy_static! {
 
 pub fn convert_to_bytes(value: f64, unit: String) -> Result<f64> {
 	let Some(conversion_rate) = UNIT_MAP.get(unit.as_str()) else {
-		return Err(anyhow!(
-			"Couldn't convert unit '{}' to bytes, that was weird..",
-			unit
-		));
+		return Err(anyhow!("Couldn't convert unit '{}' to bytes.", unit));
 	};
 
 	let result = conversion_rate * value;

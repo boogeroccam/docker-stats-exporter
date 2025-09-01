@@ -28,6 +28,10 @@ struct Args {
 	/// Log level (error, warn, info, debug, trace)
 	#[arg(long, default_value = "info")]
 	log_level: String,
+
+	/// Number of worker threads for the runtime
+	#[arg(short, long, default_value = "4")]
+	threads: usize,
 }
 
 fn parse_labels(labels_str: Option<String>) -> Result<HashMap<String, String>> {
@@ -236,11 +240,20 @@ async fn docker_stats_metrics(labels: HashMap<String, String>) -> ApiResult<Stri
 	Ok(prometheus_stuff)
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
 	let args = Args::parse();
 	let labels = parse_labels(args.labels)?;
 
+	// Create custom Tokio runtime with limited threads
+	let runtime = tokio::runtime::Builder::new_multi_thread()
+		.worker_threads(args.threads)
+		.enable_all()
+		.build()?;
+
+	runtime.block_on(async_main(args, labels))
+}
+
+async fn async_main(args: Args, labels: HashMap<String, String>) -> Result<()> {
 	let env_filter = match args.log_level.to_lowercase().as_str() {
 		"error" => format!("docker_stats_exporter=error,tower_http=error"),
 		"warn" => format!("docker_stats_exporter=warn,tower_http=warn"),
