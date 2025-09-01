@@ -61,21 +61,27 @@ fn percent_gauge(
 	name: String,
 	mut percent_string: String,
 	help: String,
+	container_name: &str,
 	labels: &HashMap<String, String>,
 ) -> Result<GenericGauge<AtomicF64>> {
 	percent_string.pop();
 	let value: f64 = percent_string.parse()?;
-	get_gauge(name, help, value, labels)
+	get_gauge(name, help, value, container_name, labels)
 }
 
 fn get_gauge(
 	name: String,
 	help: String,
 	value: f64,
+	container_name: &str,
 	labels: &HashMap<String, String>,
 ) -> Result<GenericGauge<AtomicF64>> {
 	let mut opts = Opts::new(name.replace("-", "_"), help);
 
+	// Add container name as a label
+	opts = opts.const_label("container", container_name);
+
+	// Add user-defined labels
 	for (key, val) in labels {
 		opts = opts.const_label(key, val);
 	}
@@ -116,31 +122,32 @@ fn gauges_for_container(
 	labels: &HashMap<String, String>,
 ) -> Result<Vec<GenericGauge<AtomicF64>>> {
 	let cpu_gauge = percent_gauge(
-		format!("{}_cpu_usage", stat.container),
+		"container_cpu_usage".to_string(),
 		stat.cpu_perc.clone(),
-		format!("CPU Usage for the '{}' container", stat.container),
+		"CPU usage percentage for container".to_string(),
+		&stat.container,
 		labels,
 	)?;
 	let mem_gauge = percent_gauge(
-		format!("{}_mem_usage", stat.container),
+		"container_memory_usage".to_string(),
 		stat.mem_perc.clone(),
-		format!("MEM Usage for the '{}' container", stat.container),
+		"Memory usage percentage for container".to_string(),
+		&stat.container,
 		labels,
 	)?;
 	let (input, output) = parse_netio_str(stat.net_io.as_str())?;
 	let net_input_gauge = get_gauge(
-		format!("{}_network_input_bytes", stat.container),
-		format!("Network input bytes for the '{}' container", stat.container),
+		"container_network_input_bytes".to_string(),
+		"Network input bytes for container".to_string(),
 		input,
+		&stat.container,
 		labels,
 	)?;
 	let net_output_gauge = get_gauge(
-		format!("{}_network_output_bytes", stat.container),
-		format!(
-			"Network output bytes for the '{}' container",
-			stat.container
-		),
+		"container_network_output_bytes".to_string(),
+		"Network output bytes for container".to_string(),
 		output,
+		&stat.container,
 		labels,
 	)?;
 
