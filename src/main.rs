@@ -128,10 +128,19 @@ fn gauges_for_container(
 		&stat.container,
 		labels,
 	)?;
-	let mem_gauge = percent_gauge(
-		"container_memory_usage".to_string(),
-		stat.mem_perc.clone(),
-		"Memory usage percentage for container".to_string(),
+	let mem_usage_bytes = parse_io_str(stat.mem_usage.clone())?;
+	let mem_usage_gauge = get_gauge(
+		"container_memory_usage_bytes".to_string(),
+		"Memory usage in bytes for container".to_string(),
+		mem_usage_bytes,
+		&stat.container,
+		labels,
+	)?;
+	let mem_limit_bytes = parse_io_str(stat.mem_limit.clone())?;
+	let mem_limit_gauge = get_gauge(
+		"container_memory_limit_bytes".to_string(),
+		"Memory limit in bytes for container".to_string(),
+		mem_limit_bytes,
 		&stat.container,
 		labels,
 	)?;
@@ -153,7 +162,8 @@ fn gauges_for_container(
 
 	Ok(vec![
 		cpu_gauge,
-		mem_gauge,
+		mem_usage_gauge,
+		mem_limit_gauge,
 		net_input_gauge,
 		net_output_gauge,
 	])
