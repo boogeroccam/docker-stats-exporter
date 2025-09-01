@@ -24,6 +24,10 @@ struct Args {
 	/// Labels to add to all metrics in format "key1=value1,key2=value2"
 	#[arg(short, long)]
 	labels: Option<String>,
+
+	/// Log level (error, warn, info, debug, trace)
+	#[arg(long, default_value = "info")]
+	log_level: String,
 }
 
 fn parse_labels(labels_str: Option<String>) -> Result<HashMap<String, String>> {
@@ -179,11 +183,25 @@ async fn main() -> Result<()> {
 	let args = Args::parse();
 	let labels = parse_labels(args.labels)?;
 
+	let env_filter = match args.log_level.to_lowercase().as_str() {
+		"error" => format!("docker_stats_exporter=error,tower_http=error"),
+		"warn" => format!("docker_stats_exporter=warn,tower_http=warn"),
+		"info" => format!("docker_stats_exporter=info,tower_http=info"),
+		"debug" => format!("docker_stats_exporter=debug,tower_http=debug,axum::rejection=trace"),
+		"trace" => format!("docker_stats_exporter=trace,tower_http=trace,axum::rejection=trace"),
+		_ => {
+			eprintln!(
+				"Invalid log level '{}'. Using 'info' instead.",
+				args.log_level
+			);
+			format!("docker_stats_exporter=info,tower_http=info")
+		},
+	};
+
 	tracing_subscriber::registry()
 		.with(
-			tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-				"docker_stats_exporter=debug,tower_http=debug,axum::rejection=trace".into()
-			}),
+			tracing_subscriber::EnvFilter::try_from_default_env()
+				.unwrap_or_else(|_| env_filter.into()),
 		)
 		.with(tracing_subscriber::fmt::layer())
 		.init();
