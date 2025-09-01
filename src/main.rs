@@ -117,6 +117,18 @@ fn parse_netio_str(netio_string: &str) -> Result<(f64, f64)> {
 	Ok((inp, out))
 }
 
+fn parse_blockio_str(blockio_string: &str) -> Result<(f64, f64)> {
+	let mut input_output: Vec<&str> = blockio_string.split(" / ").collect();
+	let (Some(output), Some(input)) = (input_output.pop(), input_output.pop()) else {
+		return Err(anyhow!("Bad block IO string: '{}'", blockio_string));
+	};
+
+	let inp = parse_io_str(input.to_string())?;
+	let out = parse_io_str(output.to_string())?;
+
+	Ok((inp, out))
+}
+
 fn parse_mem_usage_str(mem_usage_string: &str) -> Result<(f64, f64)> {
 	let mut usage_limit: Vec<&str> = mem_usage_string.split(" / ").collect();
 	let (Some(limit), Some(usage)) = (usage_limit.pop(), usage_limit.pop()) else {
@@ -171,12 +183,30 @@ fn gauges_for_container(
 		labels,
 	)?;
 
+	let (block_read, block_write) = parse_blockio_str(stat.block_io.as_str())?;
+	let block_read_gauge = get_gauge(
+		"container_block_read_bytes".to_string(),
+		"Block read bytes for container".to_string(),
+		block_read,
+		&stat.container,
+		labels,
+	)?;
+	let block_write_gauge = get_gauge(
+		"container_block_write_bytes".to_string(),
+		"Block write bytes for container".to_string(),
+		block_write,
+		&stat.container,
+		labels,
+	)?;
+
 	Ok(vec![
 		cpu_gauge,
 		mem_usage_gauge,
 		mem_limit_gauge,
 		net_input_gauge,
 		net_output_gauge,
+		block_read_gauge,
+		block_write_gauge,
 	])
 }
 
