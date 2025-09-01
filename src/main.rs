@@ -117,6 +117,18 @@ fn parse_netio_str(netio_string: &str) -> Result<(f64, f64)> {
 	Ok((inp, out))
 }
 
+fn parse_mem_usage_str(mem_usage_string: &str) -> Result<(f64, f64)> {
+	let mut usage_limit: Vec<&str> = mem_usage_string.split(" / ").collect();
+	let (Some(limit), Some(usage)) = (usage_limit.pop(), usage_limit.pop()) else {
+		return Err(anyhow!("Bad memory usage string: '{}'", mem_usage_string));
+	};
+
+	let usage_bytes = parse_io_str(usage.to_string())?;
+	let limit_bytes = parse_io_str(limit.to_string())?;
+
+	Ok((usage_bytes, limit_bytes))
+}
+
 fn gauges_for_container(
 	stat: &DockerContainerStats,
 	labels: &HashMap<String, String>,
@@ -128,7 +140,7 @@ fn gauges_for_container(
 		&stat.container,
 		labels,
 	)?;
-	let mem_usage_bytes = parse_io_str(stat.mem_usage.clone())?;
+	let (mem_usage_bytes, mem_limit_bytes) = parse_mem_usage_str(stat.mem_usage.as_str())?;
 	let mem_usage_gauge = get_gauge(
 		"container_memory_usage_bytes".to_string(),
 		"Memory usage in bytes for container".to_string(),
@@ -136,7 +148,6 @@ fn gauges_for_container(
 		&stat.container,
 		labels,
 	)?;
-	let mem_limit_bytes = parse_io_str(stat.mem_limit.clone())?;
 	let mem_limit_gauge = get_gauge(
 		"container_memory_limit_bytes".to_string(),
 		"Memory limit in bytes for container".to_string(),

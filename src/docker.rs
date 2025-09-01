@@ -7,11 +7,10 @@ pub struct DockerContainerStats {
 	pub container: String,
 	pub cpu_perc: String,
 	pub mem_usage: String,
-	pub mem_limit: String,
 	pub net_io: String,
 }
 
-const DOCKER_FORMAT: &str = r#"{"container": "{{.Name}}", "cpu_perc": "{{.CPUPerc}}", "mem_usage": "{{.MemUsage}}", "mem_limit": "{{.MemLimit}}", "net_io": "{{.NetIO}}"}"#;
+const DOCKER_FORMAT: &str = r#"{"container": "{{.Name}}", "cpu_perc": "{{.CPUPerc}}", "mem_usage": "{{.MemUsage}}", "net_io": "{{.NetIO}}"}"#;
 
 pub fn stats() -> Result<Vec<DockerContainerStats>> {
 	let output = Command::new("docker")
