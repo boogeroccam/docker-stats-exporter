@@ -1,0 +1,11 @@
+[Unit]
+Description=Docker Stats Exporter Service
+
+[Service]
+WorkingDirectory=%h/_docker-stats-exporter
+ExecStart=%h/_docker-stats-exporter/target/release/docker-stats-exporter
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
