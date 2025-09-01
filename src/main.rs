@@ -242,7 +242,7 @@ async fn docker_stats_metrics(labels: HashMap<String, String>) -> ApiResult<Stri
 
 fn main() -> Result<()> {
 	let args = Args::parse();
-	let labels = parse_labels(args.labels)?;
+	let labels = parse_labels(args.labels.clone())?;
 
 	// Create custom Tokio runtime with limited threads
 	let runtime = tokio::runtime::Builder::new_multi_thread()
